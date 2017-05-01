@@ -65,6 +65,11 @@ if __name__ == "__main__":
             minSize=(30, 30),
             flags=cv2.cv.CV_HAAR_SCALE_IMAGE
         )
+        public SettingsPage()
+        {
+            this.InitializeComponent();
+            this.DataContext = SettingsHelper.Instance;
+        }
 
         # Draw a rectangle around the faces
         for (x, y, w, h) in faces:
