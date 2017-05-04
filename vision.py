@@ -1,4 +1,4 @@
-import sys
+Hello
 
 vision_enabled = False
 try:
