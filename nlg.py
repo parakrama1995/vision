@@ -376,6 +376,15 @@ class NLG(object):
                  'prepmodifiers': ['potatoes', 'celery', 'carrots'],
                  'adverbs': ['confidently'],
         }
+        NPPhraseSpec = gateway.jvm.NPPhraseSpec
+        PPPhraseSpec = gateway.jvm.PPPhraseSpec
+        SPhraseSpec = gateway.jvm.SPhraseSpec
+        InterrogativeType = gateway.jvm.InterrogativeType
+        Realiser = gateway.jvm.Realiser
+        TextSpec = gateway.jvm.TextSpec
+        Tense = gateway.jvm.Tense
+        Form = gateway.jvm.Form
+
 
         nlg.generate('yes_no', words)
         u'Do you confidently prefer Thai recipes that contains potatoes, celery and carrots?'
