@@ -3,6 +3,25 @@ import random
 import datetime
 from py4j_server import launch_py4j_server
 from py4j.java_gateway import java_import
+package com.google.cloud.vision.samples.landmarkdetection;
+
+// [START import_libraries]
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.vision.v1.Vision;
+import com.google.api.services.vision.v1.VisionScopes;
+import com.google.api.services.vision.v1.model.AnnotateImageRequest;
+import com.google.api.services.vision.v1.model.AnnotateImageResponse;
+import com.google.api.services.vision.v1.model.BatchAnnotateImagesRequest;
+import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
+import com.google.api.services.vision.v1.model.EntityAnnotation;
+import com.google.api.services.vision.v1.model.Feature;
+import com.google.api.services.vision.v1.model.Image;
+import com.google.api.services.vision.v1.model.ImageSource;
+import com.google.common.collect.ImmutableList;
+
 
 gateway = launch_py4j_server()
 
@@ -86,6 +105,81 @@ class NLG(object):
         ]
 
         return random.choice(phrases)
+    public static void main(String[] args) throws IOException, GeneralSecurityException {
+    if (args.length != 1) {
+      System.err.println("Usage:");
+      System.err.printf("\tjava %s gs://<bucket_name>/<object_name>\n",
+          DetectLandmark.class.getCanonicalName());
+      System.exit(1);
+    } else if (!args[0].toLowerCase().startsWith("gs://")) {
+      System.err.println("Google Cloud Storage url must start with 'gs://'.");
+      System.exit(1);
+    }
+
+    DetectLandmark app = new DetectLandmark(getVisionService());
+    List<EntityAnnotation> landmarks = app.identifyLandmark(args[0], MAX_RESULTS);
+    System.out.printf("Found %d landmark%s\n", landmarks.size(), landmarks.size() == 1 ? "" : "s");
+    for (EntityAnnotation annotation : landmarks) {
+      System.out.printf("\t%s\n", annotation.getDescription());
+    }
+  }
+  // [END run_application]
+
+  // [START authenticate]
+  /**
+   * Connects to the Vision API using Application Default Credentials.
+   */
+  public static Vision getVisionService() throws IOException, GeneralSecurityException {
+    GoogleCredential credential =
+        GoogleCredential.getApplicationDefault().createScoped(VisionScopes.all());
+    JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+    return new Vision.Builder(GoogleNetHttpTransport.newTrustedTransport(), jsonFactory, credential)
+            .setApplicationName(APPLICATION_NAME)
+            .build();
+  }
+  // [END authenticate]
+
+  // [START detect_gcs_object]
+  private final Vision vision;
+
+  /**
+   * Constructs a {@link DetectLandmark} which connects to the Vision API.
+   */
+  public DetectLandmark(Vision vision) {
+    this.vision = vision;
+  }
+
+  /**
+   * Gets up to {@code maxResults} landmarks for an image stored at {@code uri}.
+   */
+  public List<EntityAnnotation> identifyLandmark(String uri, int maxResults) throws IOException {
+    AnnotateImageRequest request =
+        new AnnotateImageRequest()
+            .setImage(new Image().setSource(
+                new ImageSource().setGcsImageUri(uri)))
+            .setFeatures(ImmutableList.of(
+                new Feature()
+                    .setType("LANDMARK_DETECTION")
+                    .setMaxResults(maxResults)));
+    Vision.Images.Annotate annotate =
+        vision.images()
+            .annotate(new BatchAnnotateImagesRequest().setRequests(ImmutableList.of(request)));
+    // Due to a bug: requests to Vision API containing large images fail when GZipped.
+    annotate.setDisableGZipContent(true);
+
+    BatchAnnotateImagesResponse batchResponse = annotate.execute();
+    assert batchResponse.getResponses().size() == 1;
+    AnnotateImageResponse response = batchResponse.getResponses().get(0);
+    if (response.getLandmarkAnnotations() == null) {
+      throw new IOException(
+          response.getError() != null
+              ? response.getError().getMessage()
+              : "Unknown error getting image annotations");
+    }
+    return response.getLandmarkAnnotations();
+  }
+  // [END detect_gcs_object]
+}
 
     def user_status(self, type='positive', attribute=None):
 
