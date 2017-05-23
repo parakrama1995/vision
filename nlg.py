@@ -672,6 +672,41 @@ if __name__ == '__main__':
                 ret_phrase = "%s %s" % ("this", ret_phrase)
 
         return ret_phrase
+    
+    def train(self):
+        """
+        Train MemN2N model using training data for tasks.
+        """
+        np.random.seed(42)  # for reproducing
+        assert self.data_dir is not None, "data_dir is not specified."
+        print("Reading data from %s ..." % self.data_dir)
+
+        # Parse training data
+        train_data_path = glob.glob('%s/qa*_*_train.txt' % self.data_dir)
+        dictionary = {"nil": 0}
+        train_story, train_questions, train_qstory = parse_babi_task(train_data_path, dictionary, False)
+
+        # Parse test data just to expand the dictionary so that it covers all words in the test data too
+        test_data_path = glob.glob('%s/qa*_*_test.txt' % self.data_dir)
+        parse_babi_task(test_data_path, dictionary, False)
+
+        # Get reversed dictionary mapping index to word
+        self.reversed_dict = dict((ix, w) for w, ix in dictionary.items())
+
+        # Construct model
+        self.general_config = BabiConfigJoint(train_story, train_questions, dictionary)
+        self.memory, self.model, self.loss = build_model(self.general_config)
+
+        # Train model
+        if self.general_config.linear_start:
+            train_linear_start(train_story, train_questions, train_qstory,
+                               self.memory, self.model, self.loss, self.general_config)
+        else:
+            train(train_story, train_questions, train_qstory,
+                  self.memory, self.model, self.loss, self.general_config)
+
+        # Save model
+        self.save_model()
 
     def generate(self, utter_type, keywords, tense=None):
         """
