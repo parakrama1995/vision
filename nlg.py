@@ -764,3 +764,14 @@ if __name__ == '__main__':
         realiser = Realiser()
         output = realiser.realiseDocument(utterance).strip()
         return output
+    
+    public static void main(String[] args) throws IOException, GeneralSecurityException {
+    if (args.length != 1) {
+      System.err.println("Usage:");
+      System.err.printf("\tjava %s gs://<bucket_name>/<object_name>\n",
+          DetectLandmark.class.getCanonicalName());
+      System.exit(1);
+    } else if (!args[0].toLowerCase().startsWith("gs://")) {
+      System.err.println("Google Cloud Storage url must start with 'gs://'.");
+      System.exit(1);
+    }
