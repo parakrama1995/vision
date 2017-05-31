@@ -180,9 +180,6 @@ class NLG(object):
   }
   // [END detect_gcs_object]
 }
-def error_measure(predictions, labels):
-    return np.sum(np.power(predictions - labels, 2)) / (2 * predictions.shape[0])
-
 
 if __name__ == '__main__':
     train_dataset, train_labels = load_data()
